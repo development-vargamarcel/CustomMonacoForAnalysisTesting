@@ -191,3 +191,64 @@ const source1SQL =
   `
 SELECT a.column1, b.column2, c.column3, d.column4, e.column5, f.column6 FROM table1 a JOIN (SELECT * FROM table2 WHERE column7 = 'value1' AND column8 = 'value2' AND (SELECT COUNT(*) FROM table3 WHERE column9 = 'value3') > 10) b ON a.column1 = b.column1 LEFT JOIN (SELECT column10, column11 FROM table4 WHERE column12 = 'value4' AND column13 IN (SELECT column14 FROM table5 WHERE column15 = 'value5')) c ON b.column2 = c.column10 INNER JOIN (SELECT column16, column17 FROM table6 WHERE column18 = 'value6' AND column19 = (SELECT MAX(column20) FROM table7 WHERE column21 = 'value7')) d ON c.column11 = d.column16 RIGHT JOIN (SELECT column22 FROM table8 WHERE column23 = 'value8' AND column24 = (SELECT SUM(column25) FROM table9 WHERE column26 = 'value9' GROUP BY column27)) e ON d.column17 = e.column22 FULL OUTER JOIN (SELECT column28, column29 FROM table10 WHERE column30 = 'value10' AND column31 = 'value11') f ON e.column23 = f.column28 WHERE a.column32 = 'value12' AND b.column33 IN (SELECT column34 FROM table11 WHERE column35 = 'value13' AND column36 > 50) AND c.column37 = (SELECT AVG(column38) FROM table12 WHERE column39 = 'value14') AND NOT EXISTS (SELECT 1 FROM table13 WHERE column40 = 'value15' AND column41 < 100) ORDER BY a.column1 DESC, b.column2 ASC LIMIT 100 OFFSET 200;
 `
+
+const source1VB_SQL =
+  `
+Imports System.Data.SqlClient
+
+Module Module1
+Sub Main()
+Dim connectionString As String = "Server=your_server;Database=your_database;User Id=your_user;Password=your_password;"
+
+Dim query As String = "
+SELECT
+e.EmployeeID,
+e.Name,
+e.Position,
+d.DepartmentName,
+s.Salary,
+s.EffectiveDate
+FROM
+Employees e
+INNER JOIN
+Departments d ON e.DepartmentID = d.DepartmentID
+INNER JOIN
+Salaries s ON e.EmployeeID = s.EmployeeID
+WHERE
+s.EffectiveDate = (SELECT MAX(EffectiveDate) FROM Salaries WHERE EmployeeID = e.EmployeeID)
+ORDER BY
+d.DepartmentName, e.Name;
+"
+
+Using connection As New SqlConnection(connectionString)
+Try
+connection.Open()
+Console.WriteLine("Connection successful.")
+
+Using command As New SqlCommand(query, connection)
+Using reader As SqlDataReader = command.ExecuteReader()
+While reader.Read()
+Dim employeeID As Integer = reader("EmployeeID")
+Dim name As String = reader("Name").ToString()
+Dim position As String = reader("Position").ToString()
+Dim departmentName As String = reader("DepartmentName").ToString()
+Dim salary As Decimal = reader("Salary")
+Dim effectiveDate As DateTime = reader("EffectiveDate")
+
+Console.WriteLine($"EmployeeID: {employeeID}, Name: {name}, Position: {position}, " &
+"Department: {departmentName}, Salary: {salary}, Effective Date: {effectiveDate.ToShortDateString()}")
+End While
+End Using
+End Using
+
+Catch ex As SqlException
+Console.WriteLine("Error: " & ex.Message)
+Finally
+connection.Close()
+Console.WriteLine("Connection closed.")
+End Try
+End Using
+End Sub
+End Module
+
+`
