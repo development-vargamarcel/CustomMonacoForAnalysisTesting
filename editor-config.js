@@ -35,6 +35,66 @@ var editorValue = config.testSource;// Usa la configurazione //TODO: Questo puo 
 
 // Carica Monaco Editor
 require(['vs/editor/editor.main'], function () {
+  //--
+  // 1. Register SQL Language (if not already present)
+  monaco.languages.register({ id: 'sql' });
+
+  monaco.languages.setMonarchTokensProvider('sql', {
+    keywords: [
+      'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'JOIN',
+      'GROUP BY', 'ORDER BY', 'AND', 'OR', 'AS', 'INTO', 'VALUES', 'SET'
+    ],
+    tokenizer: {
+      root: [
+        [/[a-zA-Z_$][\w$]*/, {
+          cases: {
+            '@keywords': 'keyword',
+            '@default': 'identifier'
+          }
+        }],
+        [/[;,.]/, 'delimiter'],
+        [/\d+/, 'number']
+      ]
+    }
+  });
+
+  // 2. Configure VB with SQL Injection
+  monaco.languages.register({ id: 'vb' });
+
+  monaco.languages.setMonarchTokensProvider('vb', {
+    tokenizer: {
+      root: [
+        [/(\")/, {
+          token: 'string.quote.vb',
+          next: '@vbString'
+        }],
+        [/'.*/, 'comment'],
+        [/(Dim|As|New|Sub|Function|End)\b/, 'keyword'],
+        [/[a-zA-Z_]\w*/, 'identifier']
+      ],
+      vbString: [
+        [/(--)/, {
+          token: 'sql-start',
+          next: '@sqlInString',
+          nextEmbedded: 'sql'  // Inject SQL here
+        }],
+        [/[^"]/, 'string'],
+        [/"C?/, { token: 'string.quote.vb', next: '@pop' }]
+      ],
+      sqlInString: [
+        [/(;)/, {
+          token: 'sql-end',
+          next: '@pop',
+          nextEmbedded: '@pop'  // Exit SQL mode
+        }],
+        [/[\s\S]/, 'sql-content']
+      ]
+    },
+    embeddedLanguages: {
+      'sql-content': 'sql'  // Map token to SQL language
+    }
+  });
+  //--
   // Inizializza l'editor
   const editor = monaco.editor.create(
     document.getElementById('editor-container'),
