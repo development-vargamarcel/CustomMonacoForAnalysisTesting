@@ -113,39 +113,6 @@ require(['vs/editor/editor.main'], function () {
   monaco.languages.register({ id: 'vb' });
   monaco.languages.register({ id: 'sql' });
 
-  // monaco.languages.setMonarchTokensProvider('vb', {
-  //   tokenizer: {
-  //     root: [
-  //       [/(\")/, {
-  //         token: 'string.quote.vb',
-  //         next: '@vbString'
-  //       }],
-  //       [/'.*/, 'comment'],
-  //       [/(Dim|As|New|Sub|Function|End)\b/, 'keyword'],
-  //       [/[a-zA-Z_]\w*/, 'identifier']
-  //     ],
-  //     vbString: [
-  //       [/(--)/, {
-  //         token: 'sql-start',
-  //         next: '@sqlInString',
-  //         nextEmbedded: 'sql'  // Inject SQL here
-  //       }],
-  //       [/[^"]/, 'string'],
-  //       [/"C?/, { token: 'string.quote.vb', next: '@pop' }]
-  //     ],
-  //     sqlInString: [
-  //       [/(;)/, {
-  //         token: 'sql-end',
-  //         next: '@pop',
-  //         nextEmbedded: '@pop'  // Exit SQL mode
-  //       }],
-  //       [/[\s\S]/, 'sql-content']
-  //     ]
-  //   },
-  //   embeddedLanguages: {
-  //     'sql-content': 'sql'  // Map token to SQL language
-  //   }
-  // });
   //--
   const faiTutto = () => {
     // Inizializza l'editor
