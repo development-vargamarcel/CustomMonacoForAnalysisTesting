@@ -200,7 +200,7 @@ Module Module1
 Sub Main()
 Dim connectionString As String = "Server=your_server;Database=your_database;User Id=your_user;Password=your_password;"
 
-Dim query As String = "
+Dim query As String = "--
 SELECT
 e.EmployeeID,
 e.Name,
@@ -217,8 +217,8 @@ Salaries s ON e.EmployeeID = s.EmployeeID
 WHERE
 s.EffectiveDate = (SELECT MAX(EffectiveDate) FROM Salaries WHERE EmployeeID = e.EmployeeID)
 ORDER BY
-d.DepartmentName, e.Name;
-"
+d.DepartmentName, e.Name
+;"
 
 Using connection As New SqlConnection(connectionString)
 Try

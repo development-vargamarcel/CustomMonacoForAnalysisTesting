@@ -6,6 +6,14 @@ require.config({
 });
 
 // Definisci le configurazioni per ogni linguaggio
+
+const SQLconfig = {
+  language: "sql",
+  formatter: (inputString) => {
+    return window.sqlFormatter.format(inputString);
+  },
+  testSource: source1SQL  // source1SQL è una stringa contenente il codice SQL da formattare //TODO: Questo puo essere rimosso prima della produzione.
+};
 const VBconfig = {
   language: "vb",
   formatter: (inputString) => {
@@ -17,17 +25,19 @@ const VBconfig = {
       removeComments: false,
       source: inputString,
     });
-    return sourcePretty;
+    function modifyString(text) {
+      return text.replace(/(?<=\"--).*?(?=;\")/s, (match) => {
+        // console.log(match);
+        return "\n" + window.sqlFormatter.format(match)
+      });
+    }
+    const modifiedString = modifyString(sourcePretty)
+    console.log(modifiedString)
+    return modifiedString
+    // return sourcePretty;
+
   },
   testSource: source1VB_SQL //source2VB // source1VB è una stringa contenente il codice VB da formattare //TODO: Questo puo essere rimosso prima della produzione.
-};
-
-const SQLconfig = {
-  language: "sql",
-  formatter: (inputString) => {
-    return window.sqlFormatter.format(inputString);
-  },
-  testSource: source1SQL  // source1SQL è una stringa contenente il codice SQL da formattare //TODO: Questo puo essere rimosso prima della produzione.
 };
 
 const config = VBconfig; // Puoi alternare tra VBconfig e SQLconfig in base al linguaggio desiderato.
@@ -36,12 +46,11 @@ var editorValue = config.testSource;// Usa la configurazione //TODO: Questo puo 
 // Carica Monaco Editor
 require(['vs/editor/editor.main'], function () {
   //--
-  // 1. Register SQL Language (if not already present)
   monaco.languages.register({ id: 'sql' });
 
   monaco.languages.setMonarchTokensProvider('sql', {
     keywords: [
-      'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'JOIN',
+      'SELECT', 'Select', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'JOIN',
       'GROUP BY', 'ORDER BY', 'AND', 'OR', 'AS', 'INTO', 'VALUES', 'SET'
     ],
     tokenizer: {
@@ -58,7 +67,7 @@ require(['vs/editor/editor.main'], function () {
     }
   });
 
-  // 2. Configure VB with SQL Injection
+
   monaco.languages.register({ id: 'vb' });
 
   monaco.languages.setMonarchTokensProvider('vb', {
