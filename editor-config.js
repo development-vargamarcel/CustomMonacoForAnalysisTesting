@@ -45,6 +45,9 @@ var editorValue = config.testSource;// Usa la configurazione //TODO: Questo puo 
 
 // Carica Monaco Editor
 require(['vs/editor/editor.main'], function () {
+  //----
+
+  //----
   //--
   monaco.languages.register({ id: 'sql' });
 
