@@ -16,9 +16,10 @@
     <div id="editor-container"></div>
 
     <!-- Local Monaco Loader -->
-    <script src="monaco-editor/vs/loader.js"></script>
+    <script src="FormattersPlain/sql-formatter.min.js"></script>
     <script src="FormattersPlain/vbPretty.js"></script>
     <script src="ExampleEditorString.js"></script>
+    <script src="monaco-editor/vs/loader.js"></script>
 
     <script>
         // Configure Monaco to use local files
@@ -29,11 +30,9 @@
         });
 
         //questo esempio "registra" un "formatter" nel editor monaco,permettendo di usare le funzioni built-in per eseguire la formattazione e permette di mantenere la posizione del cursore.
-
         //pensavo di fornire una configurazione in base al linguaggio utilizzato.In questo modo l'unica cosa che deve esere diversa quando voglio creare un editor per un altro liguaggio,sarà quest'oggetto
-        const config = {
+        const VBconfig = {
             language: "vb",
-            formatter: (inputString) => { return inputString.toUpperCase(); },
             formatter: (inputString) => {
                 var sourcePretty = vbspretty({
                     level: 0,
@@ -43,13 +42,24 @@
                     removeComments: false,
                     source: inputString,
                 });
-
-                console.log(sourcePretty)
                 return sourcePretty
-            }
-        } //ora la funzione che esegue il formatting può prendere il posto di questo metodo di esempio che ho chiamato "formatter"
+            },
+            testSource: source2VB //source1SQL è una stringa contenente il codice vb da formattare,TODO: cancellare questa riga prima di andare in produzione
+        }
+        const SQLconfig = {
+            language: "sql",
+            formatter: (inputString) => {
+                return window.sqlFormatter.format(inputString);
+            },
+            testSource: source1SQL  //source1SQL è una stringa contenente il codice sql da formattare,TODO: cancellare questa riga prima di andare in produzione
+        }
+        const config = SQLconfig;
+        var editorValue = config.testSource; //TODO: cancellare questa riga prima di andare in produzione
 
-        var editorValue = source2VB
+
+
+
+
         /////////////
         // Load the editor main module
         require(['vs/editor/editor.main'], function () {
@@ -58,7 +68,8 @@
                 document.getElementById('editor-container'),
                 {
                     value: editorValue,
-                    language: config.language,//uso la configurazione                    theme: 'vs-dark',
+                    language: config.language,//uso la configurazione                    
+                    theme: 'vs-dark',
                     automaticLayout: true,
                     minimap: {
                         enabled: true
@@ -75,7 +86,7 @@
 
             /////////////
             //qua aggiungo il formatter specificando per quale linguaggio verrà abilitato (al clickDestro su editor o premmendo shift alt F) e la funzione che eseguira la formattazione
-            monaco.languages.registerDocumentFormattingEditProvider("vb", { //uso la configurazione
+            monaco.languages.registerDocumentFormattingEditProvider(config.language, { //uso la configurazione
                 provideDocumentFormattingEdits: function (model, options, token) {
                     const formattedText = config.formatter(model.getValue());//uso la configurazione
                     return [
@@ -88,17 +99,65 @@
             });
 
             /////////
+            //////////////
+            // monaco.languages.registerDocumentFormattingEditProvider(config.language, {
+            //     provideDocumentFormattingEdits: function (model, options, token) {
+            //         const selections = editor.getSelections(); // Get the selected ranges
+            //         const edits = [];
+            //         console.log({ selections });
+            //         // Loop through all selections and apply formatting to each one
+            //         selections.forEach(selection => {
+            //             const selectedText = model.getValueInRange(selection); // Get text in selection
+            //             const formattedText = config.formatter(selectedText); // Format the selected text
+            //             console.log({ selection, selectedText, formattedText });
+            //             edits.push({
+            //                 range: selection, // Use the selection range
+            //                 text: formattedText, // Use the formatted text
+            //             });
+            //         });
 
-            // // Enable format on type
-            // editor.onDidChangeModelContent(() => {
-            //     const model = editor.getModel();
-            //     if (model) {
-            //         // Trigger format after every change in the content
-            //         setTimeout(() => {
-            //             editor.getAction("editor.action.formatDocument").run(); // Run the format action
-            //         }, 1000); // Adding a delay to avoid continuous formatting while typing
-            //     }
+            //         return edits;
+            //     },
             // });
+            ////////////
+
+            //////////---
+            editor.addAction({
+                id: 'format-selected-text',
+                label: 'Format Selected',
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: 1,
+                run: function () {
+                    const selections = editor.getSelections();
+                    if (selections.length === 0) {
+                        console.log("Nessun testo da formattare.");
+                        return;
+                    }
+
+                    const model = editor.getModel();
+                    const edits = [];
+                    selections.forEach(selection => {
+                        const selectedText = model.getValueInRange(selection);
+                        const formattedText = config.formatter(selectedText);
+                        console.log({ selectedText, formattedText });
+                        edits.push({
+                            range: selection,
+                            text: formattedText,
+                        });
+                    });
+
+
+                    model.pushEditOperations(selections, edits.map(edit => ({
+                        range: edit.range,
+                        text: edit.text,
+                    })), () => null);
+                }
+            });
+
+            //shift + f
+
+            /////////--
+
         });
     </script>
 </body>
